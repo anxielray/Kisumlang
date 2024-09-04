@@ -1,0 +1,11 @@
+package main
+
+import(
+    "format"
+)
+
+func main() {
+    //Our code implecations go here!
+}
+
+//Imply the built-in functions of our program...
