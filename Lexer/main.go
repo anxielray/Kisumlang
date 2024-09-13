@@ -24,6 +24,16 @@ const (
 	TokenIdentifier  TokenType = "IDENTIFIER"
 	TokenKeywordIf   TokenType = "IF"
 	TokenKeywordElse TokenType = "ELSE"
+	TokenSemiColon   TokenType = "SEMICOLON"
+	TokenFunction    TokenType = "FUNCTION"
+	TokenComment     TokenType = "COMMENT"
+	TokenEqual       TokenType = "EQUAL"
+	TokenLessThan    TokenType = "LESS_THAN"
+	TokenGreaterThan TokenType = "GREATER_THAN"
+	TokenColon       TokenType = "COLON"
+	TokenComma       TokenType = "COMMA"
+	TokenLeftBrace   TokenType = "BRACE"
+	TokenRightBrace  TokenType = "RIGHT_BRACE"
 )
 
 // define the contents of a token...
@@ -56,6 +66,31 @@ func (l *Lexer) NextToken() Token {
 	ch := l.currentChar()
 
 	switch {
+
+	case ch == '=':
+		l.advance()
+		return Token{Type: TokenEqual, Value: "="}
+	case ch == '<':
+		l.advance()
+		return Token{Type: TokenLessThan, Value: "<"}
+	case ch == '>':
+		l.advance()
+		return Token{Type: TokenGreaterThan, Value: ">"}
+	case ch == ':':
+		l.advance()
+		return Token{Type: TokenColon, Value: ":"}
+	case ch == ',':
+		l.advance()
+		return Token{Type: TokenComma, Value: ","}
+	case ch == '{':
+		l.advance()
+		return Token{Type: TokenLeftBrace, Value: "{"}
+	case ch == '}':
+		l.advance()
+		return Token{Type: TokenRightBrace, Value: "}"}
+	case ch == ';':
+		l.advance()
+		return Token{Type: TokenSemiColon, Value: ";"}
 	case unicode.IsDigit(ch):
 		return l.scanNumber()
 	case ch == '+':
@@ -68,20 +103,20 @@ func (l *Lexer) NextToken() Token {
 		l.advance()
 		return Token{Type: TokenMultiply, Value: "*"}
 	case ch == '/':
-		l.advance()
-		return Token{Type: TokenDivide, Value: "/"}
+		return l.scanComment()
 	case ch == '(':
 		l.advance()
 		return Token{Type: TokenLeftParen}
 	case ch == ')':
 		l.advance()
 		return Token{Type: TokenRightParen}
-	// case unicode.IsLetter(ch):
-	// 	return l.scanIdentifier()
+	case unicode.IsLetter(ch):
+		return l.scanIdentifier()
 	default:
 		fmt.Println(Token{Type: TokenILLEGAL})
 		os.Exit(0)
 	}
+
 	return Token{Type: TokenError}
 }
 
@@ -102,6 +137,33 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
+// scanComment scans comments or division tokens
+func (l *Lexer) scanComment() Token {
+	if l.current < len(l.input) {
+		var count int
+		for _, c := range l.input {
+			if c == '/' {
+				count++
+			} else {
+				continue
+			}
+		}
+		// println(count)
+		if count == 1 {
+			l.advance() // Move past the single '/'
+			return Token{Type: TokenDivide, Value: "/"}
+		} else if count > 1 {
+			start := l.current
+			for l.current < len(l.input) && l.input[l.current] != '\n' {
+				l.advance()
+			}
+			return Token{Type: TokenComment, Value: l.input[start:l.current]}
+		}
+	}
+	// If no comment or divide token is found, return an illegal token
+	return Token{Type: TokenILLEGAL}
+}
+
 // method to handle the numbe tokens...
 func (l *Lexer) scanNumber() Token {
 	start := l.current
@@ -120,6 +182,9 @@ func (l *Lexer) scanIdentifier() Token {
 			// l.advance()
 			l.current += 3
 			return Token{Type: TokenLET, Value: "LET"}
+		} else if strings.Fields(l.input)[0] == "Func" || strings.Fields(l.input)[0] == "func" {
+			l.current += 4
+			return Token{Type: TokenFunction, Value: "FUNCTION"}
 		}
 		l.current += 1
 	}
@@ -127,7 +192,7 @@ func (l *Lexer) scanIdentifier() Token {
 }
 
 func main() {
-	input := "let 3 + 5 * (10 - 4)"
+	input := "//let 3 / 5 *  (10 - 4)"
 	lexer := NewLexer(input)
 
 	fmt.Printf("Statement: %s\n\n", input)
