@@ -4,7 +4,7 @@
 
 - A parser is a software component that takes input data (typically text) and builds a data structure – often some kind of parse tree, abstract syntax tree or other hierarchical structure, giving a structural representation of the input while checking for correct syntax.
 
-### Responsibilities:
+### Responsibilities
 
 - Reads tokens produced by the lexer.
 - Constructs the AST or parse tree based on predefined grammar rules.
