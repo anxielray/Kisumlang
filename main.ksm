@@ -1,22 +1,21 @@
-main library
+//main library
 
-fetch(
-    "format"
-)
+//fetch(
+//    "format"
+//)
 
-Func main() {
-    //Our code implecations go here!
-format.Printline("Hello, World!)
-}
+//Func main() {
+//Our code implecations go here!
+//format.Printline("Hello, World!");
+//}
 
 //Imply the built-in functions of our program...
-/*
-INTERPRETATION
+//INTERPRETATION
 
-Fetch: Will stand in for import equivalent in Golang
-format: Will stand in for the Golang equivalent, fmt package.
-Func: Stating a global function.
-func: will stand for a local function.
-Printline("Hello World"): Standing in for printing a statement followed by a new line
-PrintAndFormat: Standing in for printing a statement when formatted.
-*/
+//Fetch: Will stand in for import equivalent in Golang
+//format: Will stand in for the Golang equivalent, fmt package.
+//Func: Stating a global function.
+//func: will stand for a local function.
+//Printline("Hello World"): Standing in for printing a statement followed by a new line
+//PrintAndFormat: Standing in for printing a statement when formatted.
+let ans = 5
