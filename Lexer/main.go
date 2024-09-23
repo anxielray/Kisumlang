@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -10,7 +11,7 @@ import (
 type TokenType string
 
 const (
-	TokenLET         TokenType = "LET"
+	TokenKeywordLet  TokenType = "LET"
 	TokenEOF         TokenType = "EOF"
 	TokenILLEGAL     TokenType = "ILLEGAL" // help us identify the tokens we did no recognize...
 	TokenError       TokenType = "ERROR"
@@ -34,6 +35,10 @@ const (
 	TokenComma       TokenType = "COMMA"
 	TokenLeftBrace   TokenType = "BRACE"
 	TokenRightBrace  TokenType = "RIGHT_BRACE"
+	TokenReturn      TokenType = "RETURN"
+	TokenString      TokenType = "STRING"
+	TokenNewLine     TokenType = "NEWLINE"
+	TokenSpace       TokenType = "SPACE"
 )
 
 // define the contents of a token...
@@ -110,13 +115,18 @@ func (l *Lexer) NextToken() Token {
 	case ch == ')':
 		l.advance()
 		return Token{Type: TokenRightParen}
-	case unicode.IsLetter(ch):
+	case unicode.IsLetter(ch) && ch == 'l':
 		return l.scanIdentifier()
+	case unicode.IsLetter(ch) && ch != 'l':
+		l.scanVar()
+	case ch == ' ':
+		return Token{Type: TokenSpace}
+	case ch == '"':
 	default:
 		fmt.Println(Token{Type: TokenILLEGAL})
 		os.Exit(0)
 	}
-
+	println(string(ch))
 	return Token{Type: TokenError}
 }
 
@@ -173,34 +183,68 @@ func (l *Lexer) scanNumber() Token {
 	return Token{Type: TokenNumber, Value: l.input[start:l.current]}
 }
 
+func (l *Lexer) scanVar() {
+	if strings.Fields(l.input)[0] == "let" {
+		variable := strings.Split(l.input, " ")[1]
+		eS := strings.Split(l.input, " ")[2]
+		l.current++
+		l.current += len(eS) + len(variable)
+		fmt.Printf("Type: %v, Value: %v\n", TokenIdentifier, variable)
+		l.current++
+		fmt.Printf("Type: %v, Value: %v\n", TokenEqual, eS)
+		data := strings.Fields(l.input)[3]
+		if l.currentChar() == ' ' {
+			fmt.Printf("Type: %v, Value: %v\n", TokenSpace, " ")
+		}
+		if unicode.IsDigit(l.currentChar()) {
+			l.scanNumber()
+			l.current--
+			println(l.current)
+		} else if l.currentChar() == '"' {
+			l.advance()
+			data = strings.Trim(data, `"`)
+			fmt.Printf("Type: %v, Value: %v\n", TokenString, data)
+		}
+	}
+}
+
 func (l *Lexer) scanIdentifier() Token {
 	start := l.current
 	for l.current < len(l.input) && (unicode.IsLetter(l.currentChar())) { // || unicode.IsDigit(l.currentChar())) {
 		if strings.Fields(l.input)[0] == "let" {
-			// l.advance()
-			// l.advance()
-			// l.advance()
 			l.current += 3
-			return Token{Type: TokenLET, Value: "LET"}
+			return Token{Type: TokenKeywordLet, Value: "LET"}
 		} else if strings.Fields(l.input)[0] == "Func" || strings.Fields(l.input)[0] == "func" {
 			l.current += 4
 			return Token{Type: TokenFunction, Value: "FUNCTION"}
 		}
 		l.current += 1
+		l.scanVar()
 	}
 	return Token{Type: TokenIdentifier, Value: l.input[start:l.current]}
 }
 
 func main() {
-	input := "//let 3 / 5 *  (10 - 4)"
-	lexer := NewLexer(input)
+	file, err := os.Open("../main.ksm")
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		input := scanner.Text()
+		// input := `let ans = "Answer"`
+		lexer := NewLexer(input)
 
-	fmt.Printf("Statement: %s\n\n", input)
-	for {
-		token := lexer.NextToken()
-		if token.Type == TokenEOF {
-			break
+		fmt.Printf("Statement: %s\n\n", input)
+		for {
+			token := lexer.NextToken()
+			if token.Type == TokenEOF {
+				break
+			}
+			fmt.Printf("Token: %s, Value: %s\n", token.Type, token.Value)
 		}
-		fmt.Printf("Token: %s, Value: %s\n", token.Type, token.Value)
+		fmt.Println()
 	}
 }
