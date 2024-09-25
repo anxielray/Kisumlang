@@ -12,7 +12,7 @@ the actual computation/ operations.
 OBJECTS: Every value like (functions, numbers, strings etc) are objects and each object
 has a type (like integer, float, string, etc.)
 
-MEMORY MANAGEMENT: Objects are created, stored in memory, ad accessed through references.
+MEMORY MANAGEMENT: Objects are created, stored in memory, and accessed through references.
 
 OPERATIONS: Objects support operations like arithmetic operations or string concatenation
 handled internally
@@ -69,6 +69,9 @@ func Eval(left Object, operator string, right Object) Object {
 			return &Integer{Value: leftVal + rightVal}
 		case "*":
 			return &Integer{Value: leftVal * rightVal}
+		case "-":
+			return &Integer{Value: leftVal - rightVal}
+
 		default:
 			return &Error{Message: "Unknown operator: " + operator}
 		}
@@ -84,5 +87,7 @@ func main() {
 	result = Eval(left, "*", right)
 	fmt.Println("5 * 3 =", result.Inspect())
 	result = Eval(left, "-", right)
+	fmt.Println("5 - 3 = ", result.Inspect())
+	result = Eval(left, "/", right)
 	fmt.Println(result.Inspect())
 }

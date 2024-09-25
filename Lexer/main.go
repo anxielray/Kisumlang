@@ -28,7 +28,7 @@ const (
 	TokenSemiColon       TokenType = "SEMICOLON"
 	TokenFunction        TokenType = "FUNCTION"
 	TokenComment         TokenType = "COMMENT"
-	TokenEqual           TokenType = "EQUAL"
+	TokenAssign          TokenType = "ASSIGN"
 	TokenLessThan        TokenType = "LESS_THAN"
 	TokenGreaterThan     TokenType = "GREATER_THAN"
 	TokenColon           TokenType = "COLON"
@@ -56,12 +56,6 @@ type Lexer struct {
 func NewLexer(input string) *Lexer {
 	return &Lexer{input: input}
 }
-func (l *Lexer) Main() Token {
-	if l.input == "main library" {
-		return Token{Type: TokenPakage, Value: "main library"}
-	}
-	return Token{Type: TokenError, Value: "ERROR"}
-}
 
 // NextToken method reads the input character by character
 func (l *Lexer) NextToken() Token {
@@ -75,7 +69,7 @@ func (l *Lexer) NextToken() Token {
 	switch {
 	case ch == '=':
 		l.advance()
-		return Token{Type: TokenEqual, Value: "="}
+		return Token{Type: TokenAssign, Value: "="}
 	case ch == '<':
 		l.advance()
 		return Token{Type: TokenLessThan, Value: "<"}
@@ -181,8 +175,6 @@ func (l *Lexer) scanNumber() Token {
 	return Token{Type: TokenNumber, Value: l.input[start:l.current]}
 }
 
-var variables []string
-
 // scanIdentifier scans identifiers and keywords
 func (l *Lexer) scanIdentifier() Token {
 	start := l.current
@@ -201,11 +193,9 @@ func (l *Lexer) scanIdentifier() Token {
 	} else if identifier == "Printline" {
 		return Token{Type: TokenBuiltInFunction, Value: identifier}
 	}
-	variables = append(variables, identifier)
 
 	return Token{Type: TokenIdentifier, Value: identifier}
 }
-
 
 // scanString scans string literals
 func (l *Lexer) scanString() Token {
@@ -222,6 +212,11 @@ func (l *Lexer) scanString() Token {
 }
 
 func main() {
+	if len(os.Args) != 1 {
+		fmt.Printf("Usage: go run .\n")
+		os.Exit(1)
+	}
+
 	file, err := os.Open("../main.ksm")
 	if err != nil {
 		fmt.Println("Error opening file:", err)
@@ -246,8 +241,8 @@ func main() {
 			}
 			fmt.Printf("Token:%s ,Value:%s\n", token.Type, token.Value)
 		}
-		fmt.Println(Token{Type: TokenEOF})
 	}
+	fmt.Println(Token{Type: TokenEOF})
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Error reading file:", err)
 	}

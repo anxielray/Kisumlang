@@ -11,7 +11,7 @@
   - If we have a statement such as the ine below and pass it through the lexer;
 
 ```sh
-"let x = 5+5;"
+"let x = 5 + 5;"
 ```
 
 expected output:
@@ -19,11 +19,11 @@ expected output:
 ```sh
 [
     LET,
-    IDENTIFIER("x"),
-    EQUAL_SIGN,
-    INTEGER(5),
+    IDENTIFIER: x,
+    ASSIGN,
+    INTEGER: 5,
     PLUS_SIGN,
-    INTEGER(5),
+    INTEGER: 5,
     SEMICOLON
 ]
 ```

@@ -13,11 +13,9 @@ PURPOSE: ASTs simplify later stages of interpretation or compilation by abstract
 */
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"unicode"
 )
 
@@ -29,6 +27,7 @@ const (
 	TOKEN_DIV     = "DIV"
 	TOKEN_ILLEGAL = "ILLEGAL"
 	TOKEN_MUL     = "MUL"
+	TOKEN_MODULO  = "MODULO"
 	TOKEN_EOF     = "EOF"
 )
 
@@ -113,6 +112,22 @@ func (b *BinOPNode) Interpret() int {
 		return b.left.Interpret() + b.right.Interpret()
 	case TOKEN_MUL:
 		return b.left.Interpret() * b.right.Interpret()
+	case TOKEN_DIV:
+		result := b.left.Interpret() - b.right.Interpret()
+		if b.right.Interpret() == 0 {
+			fmt.Println("Error: Division by zero")
+			os.Exit(1)
+		}
+		return result
+	case TOKEN_MINUS:
+		return b.left.Interpret() - b.right.Interpret()
+	case TOKEN_MODULO:
+		result := b.left.Interpret() % b.right.Interpret()
+		if b.right.Interpret() == 0 {
+			fmt.Println("Error: Modulo by zero")
+			os.Exit(1)
+		}
+		return result
 	default:
 		fmt.Println("Unknown operator")
 		os.Exit(1)
@@ -124,9 +139,22 @@ func (n *NumNode) Interpret() int {
 	return n.value
 }
 
+type Parser struct {
+	lexer *Lexer
+	token Token
+}
+
+func (p *Parser) Eat(tokenType string) {
+	if p.token.typ == tokenType {
+		p.token = p.lexer.GetNextToken()
+	} else {
+		fmt.Println("Syntax error")
+	}
+}
+
 func (p *Parser) Factor() ASTNode {
-	value, _ := strconv.Atoi(p.token.value)
-	node := &NumNode{value: value}
+	v, _ := strconv.Atoi(p.token.value)
+	node := &NumNode{value: v}
 	p.Eat(TOKEN_INT)
 	return node
 }
@@ -162,23 +190,10 @@ func (l *Lexer) SkipWhitespace() {
 	}
 }
 
-type Parser struct {
-	lexer *Lexer
-	token Token
-}
-
 func NewParser(lexer *Lexer) *Parser {
 	parser := &Parser{lexer: lexer}
 	parser.token = lexer.GetNextToken()
 	return parser
-}
-
-func (p *Parser) Eat(tokenType string) {
-	if p.token.typ == tokenType {
-		p.token = p.lexer.GetNextToken()
-	} else {
-		fmt.Println("Syntax error")
-	}
 }
 
 func (l *Lexer) scanComment() Token {
@@ -191,9 +206,11 @@ func (l *Lexer) scanComment() Token {
 				continue
 			}
 		}
-		// println(count)
 		if count == 1 {
 			l.pos++
+			if l.pos == 0 {
+				return Token{typ: TOKEN_ILLEGAL}
+			}
 			return Token{typ: TOKEN_DIV, value: "/"}
 		} else if count > 1 {
 			start := l.pos
@@ -227,29 +244,30 @@ func (p *Parser) Expr() int {
 }
 
 func main() {
-	file, err := os.Open("../main.ksm")
-	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return
-	}
-	defer file.Close()
+	input := "3 * 8 / 2"
+	// file, err := os.Open("../main.ksm")
+	// if err != nil {
+	// 	fmt.Println("Error opening file:", err)
+	// 	return
+	// }
+	// defer file.Close()
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		input := scanner.Text()
-		if strings.Contains(input, "main library") {
-			continue
-		} else if input == "" {
-			continue
-		}
-		lexer := NewLexer(input)
-		parser := NewParser(lexer)
-		ast := parser.AExpr()
-		result := ast.Interpret()
-		fmt.Println("Result: ", result)
-	}
-	if err := scanner.Err(); err != nil {
-		fmt.Println("Error reading file:", err)
-	}
+	// scanner := bufio.NewScanner(file)
+	// for scanner.Scan() {
+	// 	input := scanner.Text()
+	// 	if strings.Contains(input, "main library") {
+	// 		continue
+	// 	} else if input == "" {
+	// 		continue
+	// 	}
+	lexer := NewLexer(input)
+	parser := NewParser(lexer)
+	ast := parser.AExpr()
+	result := ast.Interpret()
+	fmt.Println("Result: ", result)
+	// }
+	// if err := scanner.Err(); err != nil {
+	// fmt.Println("Error reading file:", err)
+	// }
 
 }
