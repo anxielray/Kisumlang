@@ -11,33 +11,34 @@ import (
 type TokenType string
 
 const (
-	TokenKeywordLet  TokenType = "LET"
-	TokenEOF         TokenType = "EOF"
-	TokenILLEGAL     TokenType = "ILLEGAL"
-	TokenError       TokenType = "ERROR"
-	TokenNumber      TokenType = "NUMBER"
-	TokenPlus        TokenType = "PLUS"
-	TokenMinus       TokenType = "MINUS"
-	TokenMultiply    TokenType = "MULTIPLY"
-	TokenDivide      TokenType = "DIVIDE"
-	TokenLeftParen   TokenType = "LEFT_PAREN"
-	TokenRightParen  TokenType = "RIGHT_PAREN"
-	TokenIdentifier  TokenType = "IDENTIFIER"
-	TokenKeywordIf   TokenType = "IF"
-	TokenKeywordElse TokenType = "ELSE"
-	TokenSemiColon   TokenType = "SEMICOLON"
-	TokenFunction    TokenType = "FUNCTION"
-	TokenComment     TokenType = "COMMENT"
-	TokenEqual       TokenType = "EQUAL"
-	TokenLessThan    TokenType = "LESS_THAN"
-	TokenGreaterThan TokenType = "GREATER_THAN"
-	TokenColon       TokenType = "COLON"
-	TokenComma       TokenType = "COMMA"
-	TokenLeftBrace   TokenType = "LEFT_BRACE"
-	TokenRightBrace  TokenType = "RIGHT_BRACE"
-	TokenReturn      TokenType = "RETURN"
-	TokenString      TokenType = "STRING"
-	TokenPakage      TokenType = "PACKAGE"
+	TokenKeywordLet      TokenType = "LET"
+	TokenEOF             TokenType = "EOF"
+	TokenILLEGAL         TokenType = "ILLEGAL"
+	TokenError           TokenType = "ERROR"
+	TokenNumber          TokenType = "NUMBER"
+	TokenPlus            TokenType = "PLUS"
+	TokenMinus           TokenType = "MINUS"
+	TokenMultiply        TokenType = "MULTIPLY"
+	TokenDivide          TokenType = "DIVIDE"
+	TokenLeftParen       TokenType = "LEFT_PAREN"
+	TokenRightParen      TokenType = "RIGHT_PAREN"
+	TokenIdentifier      TokenType = "IDENTIFIER"
+	TokenKeywordIf       TokenType = "IF"
+	TokenKeywordElse     TokenType = "ELSE"
+	TokenSemiColon       TokenType = "SEMICOLON"
+	TokenFunction        TokenType = "FUNCTION"
+	TokenComment         TokenType = "COMMENT"
+	TokenEqual           TokenType = "EQUAL"
+	TokenLessThan        TokenType = "LESS_THAN"
+	TokenGreaterThan     TokenType = "GREATER_THAN"
+	TokenColon           TokenType = "COLON"
+	TokenComma           TokenType = "COMMA"
+	TokenLeftBrace       TokenType = "LEFT_BRACE"
+	TokenRightBrace      TokenType = "RIGHT_BRACE"
+	TokenReturn          TokenType = "RETURN"
+	TokenString          TokenType = "STRING"
+	TokenPakage          TokenType = "PACKAGE"
+	TokenBuiltInFunction TokenType = "PRINTLINE"
 )
 
 // define the contents of a token...
@@ -171,7 +172,6 @@ func (l *Lexer) scanComment() Token {
 	return Token{Type: TokenILLEGAL}
 }
 
-
 // scanNumber scans number tokens
 func (l *Lexer) scanNumber() Token {
 	start := l.current
@@ -181,6 +181,8 @@ func (l *Lexer) scanNumber() Token {
 	return Token{Type: TokenNumber, Value: l.input[start:l.current]}
 }
 
+var variables []string
+
 // scanIdentifier scans identifiers and keywords
 func (l *Lexer) scanIdentifier() Token {
 	start := l.current
@@ -188,7 +190,7 @@ func (l *Lexer) scanIdentifier() Token {
 		l.advance()
 	}
 	identifier := l.input[start:l.current]
-	if l.current != 0 {
+	if (strings.Contains(l.input, "let") && (strings.Fields(l.input)[0] != "let")) || (strings.Contains(l.input, "Func") && (strings.Fields(l.input)[0] != "Func")) || (strings.Contains(l.input, "func") && (strings.Fields(l.input)[0] != "func")) {
 		return Token{Type: TokenError, Value: "ERROR"}
 	}
 
@@ -196,10 +198,14 @@ func (l *Lexer) scanIdentifier() Token {
 		return Token{Type: TokenKeywordLet, Value: identifier}
 	} else if identifier == "func" || identifier == "Func" {
 		return Token{Type: TokenFunction, Value: "FUNCTION"}
+	} else if identifier == "Printline" {
+		return Token{Type: TokenBuiltInFunction, Value: identifier}
 	}
+	variables = append(variables, identifier)
 
 	return Token{Type: TokenIdentifier, Value: identifier}
 }
+
 
 // scanString scans string literals
 func (l *Lexer) scanString() Token {
@@ -209,7 +215,7 @@ func (l *Lexer) scanString() Token {
 		for l.current < len(l.input) && l.input[l.current] != '"' {
 			l.current++
 		}
-		l.current++ // Skip closing quote
+		l.current++
 		return Token{Type: TokenString, Value: l.input[start : l.current-1]}
 	}
 	return Token{Type: TokenILLEGAL, Value: ""}
@@ -240,7 +246,7 @@ func main() {
 			}
 			fmt.Printf("Token:%s ,Value:%s\n", token.Type, token.Value)
 		}
-		fmt.Println()
+		fmt.Println(Token{Type: TokenEOF})
 	}
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Error reading file:", err)
