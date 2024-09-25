@@ -1,13 +1,16 @@
-//main library
+main library
 
 //fetch(
 //    "format"
 //)
 
-//Func main() {
-//Our code implecations go here!
-//format.Printline("Hello, World!");
-//}
+Func main() {
+//Our code implimentations go here!
+let ans = 5;
+3 + 5 * 2
+let name = "Anxiel";
+Printline("Hello, World!");
+}
 
 //Imply the built-in functions of our program...
 //INTERPRETATION
@@ -18,4 +21,3 @@
 //func: will stand for a local function.
 //Printline("Hello World"): Standing in for printing a statement followed by a new line
 //PrintAndFormat: Standing in for printing a statement when formatted.
-let ans = 5
