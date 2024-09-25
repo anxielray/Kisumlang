@@ -13,7 +13,7 @@ type TokenType string
 const (
 	TokenKeywordLet  TokenType = "LET"
 	TokenEOF         TokenType = "EOF"
-	TokenILLEGAL     TokenType = "ILLEGAL" // help us identify the tokens we did no recognize...
+	TokenILLEGAL     TokenType = "ILLEGAL"
 	TokenError       TokenType = "ERROR"
 	TokenNumber      TokenType = "NUMBER"
 	TokenPlus        TokenType = "PLUS"
@@ -33,12 +33,11 @@ const (
 	TokenGreaterThan TokenType = "GREATER_THAN"
 	TokenColon       TokenType = "COLON"
 	TokenComma       TokenType = "COMMA"
-	TokenLeftBrace   TokenType = "BRACE"
+	TokenLeftBrace   TokenType = "LEFT_BRACE"
 	TokenRightBrace  TokenType = "RIGHT_BRACE"
 	TokenReturn      TokenType = "RETURN"
 	TokenString      TokenType = "STRING"
-	TokenNewLine     TokenType = "NEWLINE"
-	TokenSpace       TokenType = "SPACE"
+	TokenPakage      TokenType = "PACKAGE"
 )
 
 // define the contents of a token...
@@ -56,12 +55,14 @@ type Lexer struct {
 func NewLexer(input string) *Lexer {
 	return &Lexer{input: input}
 }
+func (l *Lexer) Main() Token {
+	if l.input == "main library" {
+		return Token{Type: TokenPakage, Value: "main library"}
+	}
+	return Token{Type: TokenError, Value: "ERROR"}
+}
 
-/*
-Token Generation...
-The NextToken method is the core of the lexer. It reads the input string character by character,
-skipping whitespace and identifying tokens based on the current character:
-*/
+// NextToken method reads the input character by character
 func (l *Lexer) NextToken() Token {
 	l.skipWhitespace()
 
@@ -71,7 +72,6 @@ func (l *Lexer) NextToken() Token {
 	ch := l.currentChar()
 
 	switch {
-
 	case ch == '=':
 		l.advance()
 		return Token{Type: TokenEqual, Value: "="}
@@ -115,32 +115,29 @@ func (l *Lexer) NextToken() Token {
 	case ch == ')':
 		l.advance()
 		return Token{Type: TokenRightParen}
-	case unicode.IsLetter(ch) && ch == 'l':
+	case unicode.IsLetter(ch):
 		return l.scanIdentifier()
-	case unicode.IsLetter(ch) && ch != 'l':
-		l.scanVar()
-	case ch == ' ':
-		return Token{Type: TokenSpace}
 	case ch == '"':
+		return l.scanString()
 	default:
 		fmt.Println(Token{Type: TokenILLEGAL})
 		os.Exit(0)
 	}
-	println(string(ch))
+
 	return Token{Type: TokenError}
 }
 
-// methpd to return the character at a given index current...
+// currentChar returns the character at the current index
 func (l *Lexer) currentChar() rune {
 	return rune(l.input[l.current])
 }
 
-// method to increment the index of the input..
+// advance increments the index of the input
 func (l *Lexer) advance() {
 	l.current++
 }
 
-// method to skip a white space character...
+// skipWhitespace skips over whitespace characters
 func (l *Lexer) skipWhitespace() {
 	for l.current < len(l.input) && unicode.IsSpace(l.currentChar()) {
 		l.advance()
@@ -174,7 +171,8 @@ func (l *Lexer) scanComment() Token {
 	return Token{Type: TokenILLEGAL}
 }
 
-// method to handle the numbe tokens...
+
+// scanNumber scans number tokens
 func (l *Lexer) scanNumber() Token {
 	start := l.current
 	for l.current < len(l.input) && unicode.IsDigit(l.currentChar()) {
@@ -183,45 +181,38 @@ func (l *Lexer) scanNumber() Token {
 	return Token{Type: TokenNumber, Value: l.input[start:l.current]}
 }
 
-func (l *Lexer) scanVar() {
-	if strings.Fields(l.input)[0] == "let" {
-		variable := strings.Split(l.input, " ")[1]
-		eS := strings.Split(l.input, " ")[2]
-		l.current++
-		l.current += len(eS) + len(variable)
-		fmt.Printf("Type: %v, Value: %v\n", TokenIdentifier, variable)
-		l.current++
-		fmt.Printf("Type: %v, Value: %v\n", TokenEqual, eS)
-		data := strings.Fields(l.input)[3]
-		if l.currentChar() == ' ' {
-			fmt.Printf("Type: %v, Value: %v\n", TokenSpace, " ")
-		}
-		if unicode.IsDigit(l.currentChar()) {
-			l.scanNumber()
-			l.current--
-			println(l.current)
-		} else if l.currentChar() == '"' {
-			l.advance()
-			data = strings.Trim(data, `"`)
-			fmt.Printf("Type: %v, Value: %v\n", TokenString, data)
-		}
-	}
-}
-
+// scanIdentifier scans identifiers and keywords
 func (l *Lexer) scanIdentifier() Token {
 	start := l.current
-	for l.current < len(l.input) && (unicode.IsLetter(l.currentChar())) { // || unicode.IsDigit(l.currentChar())) {
-		if strings.Fields(l.input)[0] == "let" {
-			l.current += 3
-			return Token{Type: TokenKeywordLet, Value: "LET"}
-		} else if strings.Fields(l.input)[0] == "Func" || strings.Fields(l.input)[0] == "func" {
-			l.current += 4
-			return Token{Type: TokenFunction, Value: "FUNCTION"}
-		}
-		l.current += 1
-		l.scanVar()
+	for l.current < len(l.input) && unicode.IsLetter(l.currentChar()) {
+		l.advance()
 	}
-	return Token{Type: TokenIdentifier, Value: l.input[start:l.current]}
+	identifier := l.input[start:l.current]
+	if l.current != 0 {
+		return Token{Type: TokenError, Value: "ERROR"}
+	}
+
+	if identifier == "let" {
+		return Token{Type: TokenKeywordLet, Value: identifier}
+	} else if identifier == "func" || identifier == "Func" {
+		return Token{Type: TokenFunction, Value: "FUNCTION"}
+	}
+
+	return Token{Type: TokenIdentifier, Value: identifier}
+}
+
+// scanString scans string literals
+func (l *Lexer) scanString() Token {
+	if l.currentChar() == '"' {
+		l.current++
+		start := l.current
+		for l.current < len(l.input) && l.input[l.current] != '"' {
+			l.current++
+		}
+		l.current++ // Skip closing quote
+		return Token{Type: TokenString, Value: l.input[start : l.current-1]}
+	}
+	return Token{Type: TokenILLEGAL, Value: ""}
 }
 
 func main() {
@@ -231,20 +222,27 @@ func main() {
 		return
 	}
 	defer file.Close()
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		input := scanner.Text()
-		// input := `let ans = "Answer"`
+		if strings.Contains(input, "main library") {
+			continue
+		} else if input == "" {
+			continue
+		}
 		lexer := NewLexer(input)
-
 		fmt.Printf("Statement: %s\n\n", input)
 		for {
 			token := lexer.NextToken()
 			if token.Type == TokenEOF {
 				break
 			}
-			fmt.Printf("Token: %s, Value: %s\n", token.Type, token.Value)
+			fmt.Printf("Token:%s ,Value:%s\n", token.Type, token.Value)
 		}
 		fmt.Println()
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading file:", err)
 	}
 }
